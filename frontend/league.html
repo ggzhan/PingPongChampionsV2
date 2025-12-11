@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Details - Ping Pong Champions</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">Ping Pong Champions</div>
+            <div class="nav-buttons">
+                <a href="dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section id="league-header" class="card" style="margin-bottom: 2rem;">
+            <div id="league-loading" class="spinner"></div>
+            <div id="league-info" class="hidden">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <h1 id="league-name" style="margin-bottom: 0;"></h1>
+                            <span id="league-badge"></span>
+                        </div>
+                        <p id="league-description" style="color: var(--text-secondary);"></p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button id="join-league-btn" class="btn btn-primary hidden">
+                        Join League
+                    </button>
+                    <button id="record-match-btn" class="btn btn-primary hidden">
+                        Record Match
+                    </button>
+                    <div id="invite-code-section" class="hidden"
+                        style="display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 0 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
+                        <span style="color: var(--text-secondary); margin-right: 0.5rem;">Invite Code:</span>
+                        <span id="league-invite-code"
+                            style="font-family: monospace; font-weight: 600; color: #667eea;"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('rankings')">Rankings</button>
+            <button class="tab-btn" onclick="switchTab('matches')">Matches</button>
+        </div>
+
+        <!-- Rankings Tab -->
+        <div id="rankings-tab" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 1.5rem;">Leaderboard</h2>
+                <div id="members-container">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matches Tab -->
+        <div id="matches-tab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 1.5rem;">Match History</h2>
+                <div id="matches-container">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <section style="margin-top: 4rem; border-top: 1px solid var(--card-border); padding-top: 2rem;">
+            <button id="leave-league-btn" class="btn btn-secondary hidden"
+                style="color: #f5576c; border-color: rgba(245, 87, 108, 0.3);">
+                Leave League
+            </button>
+        </section>
+    </main>
+
+    <!-- Match Recording Modal -->
+    <div id="match-modal" class="modal hidden">
+        <div class="modal-content card">
+            <span id="close-modal" class="close">&times;</span>
+            <h2>Record Match Result</h2>
+            <form id="match-form">
+                <div class="form-group">
+                    <label for="winner-select">Winner</label>
+                    <select id="winner-select" required
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--card-border); background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="">Select Winner</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="loser-select">Loser</label>
+                    <select id="loser-select" required
+                        style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--card-border); background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="">Select Loser</option>
+                    </select>
+                </div>
+
+                <div id="match-error" class="error-message hidden" style="margin-top: 1rem;"></div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                    Submit Result
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Ping Pong Champions. All rights reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        // Get league ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const leagueId = urlParams.get('id');
+
+        if (!leagueId) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = 'index.html';
+        });
+
+        // Load league details
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadLeagueDetails(leagueId);
+        });
+
+        // Join league handler
+        document.getElementById('join-league-btn').addEventListener('click', async () => {
+            try {
+                await joinPublicLeague(leagueId);
+                alert('Successfully joined the league!');
+                await loadLeagueDetails(leagueId);
+            } catch (error) {
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = error.message || 'Failed to join league';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Leave league handler
+        document.getElementById('leave-league-btn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to leave this league?')) {
+                try {
+                    await leaveLeague(leagueId);
+                    alert('Successfully left the league');
+                    window.location.href = 'dashboard.html';
+                } catch (error) {
+                    const errorDiv = document.getElementById('error-message');
+                    errorDiv.textContent = error.message || 'Failed to leave league';
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+        });
+
+        // Modal elements
+        const modal = document.getElementById('match-modal');
+        const btn = document.getElementById('record-match-btn');
+        const span = document.getElementById('close-modal');
+        const matchForm = document.getElementById('match-form');
+        let currentMembers = [];
+
+        // Open modal
+        btn.onclick = function () {
+            modal.classList.remove('hidden');
+            populateSelects();
+        }
+
+        // Close modal
+        span.onclick = function () {
+            modal.classList.add('hidden');
+        }
+
+        // Close on outside click
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Handle match submission
+        matchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const winnerId = document.getElementById('winner-select').value;
+            const loserId = document.getElementById('loser-select').value;
+
+            if (winnerId === loserId) {
+                showMatchError('Winner and loser cannot be the same person');
+                return;
+            }
+
+            try {
+                await recordMatch(leagueId, winnerId, loserId);
+                modal.classList.add('hidden');
+                alert('Match recorded successfully! Rankings updated.');
+                // Reload details to update rankings
+                await loadLeagueDetails(leagueId);
+                // Reset form
+                matchForm.reset();
+            } catch (error) {
+                showMatchError(error.message || 'Failed to record match');
+            }
+        });
+
+        function showMatchError(msg) {
+            const errorDiv = document.getElementById('match-error');
+            errorDiv.textContent = msg;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function populateSelects() {
+            const winnerSelect = document.getElementById('winner-select');
+            const loserSelect = document.getElementById('loser-select');
+
+            // Clear existing options except first
+            winnerSelect.innerHTML = '<option value="">Select Winner</option>';
+            loserSelect.innerHTML = '<option value="">Select Loser</option>';
+
+            // Sort members by name for dropdown
+            const sortedMembers = [...currentMembers].sort((a, b) => a.username.localeCompare(b.username));
+
+            sortedMembers.forEach(member => {
+                const option1 = document.createElement('option');
+                option1.value = member.userId;
+                option1.textContent = `${member.username} (${member.elo})`;
+                winnerSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = member.userId;
+                option2.textContent = `${member.username} (${member.elo})`;
+                loserSelect.appendChild(option2);
+            });
+        }
+
+        async function loadLeagueDetails(id) {
+            try {
+                const league = await getLeagueDetails(id);
+                currentMembers = league.members;
+
+                // Hide loading spinner
+                document.getElementById('league-loading').classList.add('hidden');
+                document.getElementById('league-info').classList.remove('hidden');
+
+                // Populate league info
+                document.getElementById('league-name').textContent = league.name;
+                document.getElementById('league-description').textContent = league.description || 'No description';
+                document.getElementById('league-creator').textContent = league.createdByUsername;
+                document.getElementById('league-member-count').textContent = league.memberCount;
+
+                // Set badge
+                const badge = document.getElementById('league-badge');
+                if (league.isPublic) {
+                    badge.className = 'league-badge badge-public';
+                    badge.textContent = 'Public';
+                } else {
+                    badge.className = 'league-badge badge-private';
+                    badge.textContent = 'Private';
+                }
+
+                // Determine membership status
+                const currentUser = getCurrentUser();
+                const isMember = league.members.some(m => m.username === currentUser.username);
+
+                // Show/Hide buttons based on membership
+                const joinBtn = document.getElementById('join-league-btn');
+                const recordBtn = document.getElementById('record-match-btn');
+                const leaveBtn = document.getElementById('leave-league-btn');
+                const inviteSection = document.getElementById('invite-code-section');
+
+                if (isMember) {
+                    joinBtn.classList.add('hidden');
+                    recordBtn.classList.remove('hidden');
+                    leaveBtn.classList.remove('hidden');
+
+                    // Show invite code if available (only for members)
+                    if (league.inviteCode) {
+                        inviteSection.classList.remove('hidden');
+                        document.getElementById('league-invite-code').textContent = league.inviteCode;
+                    }
+                } else {
+                    recordBtn.classList.add('hidden');
+                    leaveBtn.classList.add('hidden');
+                    inviteSection.classList.add('hidden');
+
+                    if (league.isPublic) {
+                        joinBtn.classList.remove('hidden');
+                    } else {
+                        joinBtn.classList.add('hidden'); // Cannot join private league from here without code
+                    }
+                }
+
+                // Render members
+                renderMembers(league.members);
+
+            } catch (error) {
+                document.getElementById('league-loading').innerHTML =
+                    '<p style="text-align: center; color: #f5576c;">Failed to load league details</p>';
+            }
+        }
+
+        function renderMembers(members) {
+            const container = document.getElementById('members-container');
+
+            if (!members || members.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No members yet</p>';
+                return;
+            }
+
+            // Sort by ELO (highest first)
+            members.sort((a, b) => b.elo - a.elo);
+
+            const table = document.createElement('div');
+            table.style.overflowX = 'auto';
+
+            table.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">
+                            <th style="padding: 1rem; text-align: center; width: 80px;">Rank</th>
+                            <th style="padding: 1rem; text-align: left;">Player</th>
+                            <th style="padding: 1rem; text-align: right;">ELO</th>
+                            <th style="padding: 1rem; text-align: center;">W/L</th>
+                            <th style="padding: 1rem; text-align: center;">Trend</th>
+                            <th style="padding: 1rem; text-align: center;">ELO +/-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${members.map((member, index) => `
+                            <tr style="border-bottom: 1px solid var(--card-border);">
+                                <td style="padding: 1rem; text-align: center;">
+                                    <span style="font-weight: 600; color: ${getRankColor(index)};">
+                                        ${index + 1}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <strong style="font-size: 1rem;">${member.username}</strong>
+                                        ${member.role === 'OWNER' ? '<span title="Owner">👑</span>' : ''}
+                                        ${member.role === 'ADMIN' ? '<span title="Admin">🛡️</span>' : ''}
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    <span style="font-weight: 700; font-size: 1.1rem;">${member.elo}</span>
+                                </td>
+                                <td style="padding: 1rem; text-align: center;">
+                                    <span style="color: #4facfe;">${member.wins || 0}</span>
+                                    <span style="color: var(--text-secondary);">/</span>
+                                    <span style="color: #f5576c;">${member.losses || 0}</span>
+                                </td>
+                                <td style="padding: 1rem; text-align: center;">
+                                    <div style="display: flex; gap: 2px; justify-content: center;">
+                                        ${renderTrend(member.trend)}
+                                    </div>
+                                </td>
+                                <td style="padding: 1rem; text-align: center;">
+                                    ${renderEloChange(member.lastEloChange)}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = '';
+            container.appendChild(table);
+        }
+
+        async function renderMatches(leagueId) {
+            const container = document.getElementById('matches-container');
+
+            try {
+                const matches = await getMatches(leagueId);
+
+                if (!matches || matches.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No matches recorded yet</p>';
+                    return;
+                }
+
+                const table = document.createElement('div');
+                table.style.overflowX = 'auto';
+
+                table.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">
+                                <th style="padding: 1rem; text-align: left;">Date</th>
+                                <th style="padding: 1rem; text-align: left;">Winner</th>
+                                <th style="padding: 1rem; text-align: left;">Loser</th>
+                                <th style="padding: 1rem; text-align: right;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${matches.map(match => `
+                                <tr style="border-bottom: 1px solid var(--card-border);">
+                                    <td style="padding: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                        ${new Date(match.playedAt).toLocaleDateString()} ${new Date(match.playedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="color: #4facfe; font-weight: 600;">${match.winnerUsername}</span>
+                                            <span style="font-size: 0.8rem; color: #4facfe;">+${match.winnerEloChange}</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="color: #f5576c;">${match.loserUsername}</span>
+                                            <span style="font-size: 0.8rem; color: #f5576c;">${match.loserEloChange}</span>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: right;">
+                                        <span style="font-family: monospace; background: rgba(255,255,255,0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">
+                                            +${match.winnerEloChange}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                container.innerHTML = '';
+                container.appendChild(table);
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #f5576c;">Failed to load matches</p>';
+            }
+        }
+
+        function renderTrend(trend) {
+            if (!trend) return '<span style="color: var(--text-secondary);">-</span>';
+            return trend.split('').map(char => {
+                const color = char === 'W' ? '#4facfe' : '#f5576c';
+                return `<span style="color: ${color}; font-weight: bold; font-size: 0.8rem;">${char}</span>`;
+            }).join('');
+        }
+
+        function renderEloChange(change) {
+            if (!change) return '<span style="color: var(--text-secondary);">-</span>';
+            const color = change > 0 ? '#4facfe' : (change < 0 ? '#f5576c' : 'var(--text-secondary)');
+            const sign = change > 0 ? '+' : '';
+            return `<span style="color: ${color}; font-weight: 600;">${sign}${change}</span>`;
+        }
+
+        function getRankColor(index) {
+            if (index === 0) return '#FFD700'; // Gold
+            if (index === 1) return '#C0C0C0'; // Silver
+            if (index === 2) return '#CD7F32'; // Bronze
+            return 'var(--text-secondary)';
+        }
+
+        function getRoleBadgeClass(role) {
+            switch (role) {
+                case 'OWNER':
+                    return 'badge-private';
+                case 'ADMIN':
+                    return 'badge-public';
+                default:
+                    return '';
+            }
+        }
+
+        // Tab switching
+        window.switchTab = function (tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Load data if needed
+            if (tabName === 'matches') {
+                renderMatches(leagueId);
+            }
+        }

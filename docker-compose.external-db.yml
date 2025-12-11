@@ -1,0 +1,19 @@
+# Docker Compose for using external PostgreSQL (e.g., Clever Cloud)
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRESQL_ADDON_HOST=${POSTGRESQL_ADDON_HOST}
+      - POSTGRESQL_ADDON_PORT=${POSTGRESQL_ADDON_PORT}
+      - POSTGRESQL_ADDON_DB=${POSTGRESQL_ADDON_DB}
+      - POSTGRESQL_ADDON_USER=${POSTGRESQL_ADDON_USER}
+      - POSTGRESQL_ADDON_PASSWORD=${POSTGRESQL_ADDON_PASSWORD}
+    env_file:
+      - .env
+    restart: unless-stopped
