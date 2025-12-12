@@ -15,41 +15,15 @@
             <div class="logo">Ping Pong Champions</div>
             <div class="nav-buttons">
                 <span id="user-info" style="color: var(--text-secondary); margin-right: 1rem;"></span>
+                <button id="create-league-btn" class="btn btn-primary" style="margin-right: 0.5rem;">Create
+                    League</button>
                 <button id="logout-btn" class="btn btn-secondary">Logout</button>
             </div>
         </nav>
     </header>
 
     <main class="container">
-        <!-- Create League Section -->
-        <section>
-            <h2>Create New League</h2>
-            <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <form id="create-league-form">
-                    <div class="form-group">
-                        <label for="league-name">League Name</label>
-                        <input type="text" id="league-name" required minlength="3">
-                    </div>
 
-                    <div class="form-group">
-                        <label for="league-description">Description</label>
-                        <textarea id="league-description"></textarea>
-                    </div>
-
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="is-public" checked>
-                        <label for="is-public">Public League (anyone can join)</label>
-                    </div>
-
-                    <div id="create-error" class="error-message hidden"></div>
-                    <div id="create-success" class="success-message hidden"></div>
-
-                    <button type="submit" class="btn btn-success" style="width: 100%;">
-                        Create League
-                    </button>
-                </form>
-            </div>
-        </section>
 
         <!-- My Leagues Section -->
         <section>
@@ -88,6 +62,37 @@
         <p>&copy; 2025 Ping Pong Champions. All rights reserved.</p>
     </footer>
 
+    <!-- Create League Modal -->
+    <div id="create-league-modal" class="modal hidden">
+        <div class="modal-content card">
+            <span id="close-create-modal" class="close">&times;</span>
+            <h2>Create New League</h2>
+            <form id="create-league-form">
+                <div class="form-group">
+                    <label for="league-name">League Name</label>
+                    <input type="text" id="league-name" required minlength="3">
+                </div>
+
+                <div class="form-group">
+                    <label for="league-description">Description</label>
+                    <textarea id="league-description"></textarea>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="is-public" checked>
+                    <label for="is-public">Public League (anyone can join)</label>
+                </div>
+
+                <div id="create-error" class="error-message hidden"></div>
+                <div id="create-success" class="success-message hidden"></div>
+
+                <button type="submit" class="btn btn-success" style="width: 100%;">
+                    Create League
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script>
         // Check authentication
@@ -106,6 +111,27 @@
             logout();
             window.location.href = 'index.html';
         });
+
+        // Modal Logic
+        const createModal = document.getElementById('create-league-modal');
+        const createBtn = document.getElementById('create-league-btn');
+        const closeCreateBtn = document.getElementById('close-create-modal');
+
+        createBtn.onclick = function () {
+            createModal.classList.remove('hidden');
+            document.getElementById('create-success').classList.add('hidden');
+            document.getElementById('create-error').classList.add('hidden');
+        }
+
+        closeCreateBtn.onclick = function () {
+            createModal.classList.add('hidden');
+        }
+
+        window.onclick = function (event) {
+            if (event.target == createModal) {
+                createModal.classList.add('hidden');
+            }
+        }
 
         // Create league handler
         document.getElementById('create-league-form').addEventListener('submit', async (e) => {

@@ -19,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -33,6 +36,14 @@ public class LeagueService {
     private final LeagueMemberRepository leagueMemberRepository;
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
+
+    private static final List<String> SUPER_ADMIN_EMAILS = List.of(
+            "gerald.zhang@gmail.com",
+            "markus.koenigreich@gmail.com");
+
+    private boolean isSuperAdmin(User user) {
+        return user.getEmail() != null && SUPER_ADMIN_EMAILS.contains(user.getEmail());
+    }
 
     @Transactional
     public LeagueResponse createLeague(CreateLeagueRequest request, String username) {
@@ -59,15 +70,20 @@ public class LeagueService {
         member.setRole("OWNER");
         leagueMemberRepository.save(member);
 
+        // Update in-memory list for response
+        league.getMembers().add(member);
+
         return mapToLeagueResponse(league);
     }
 
+    @Transactional(readOnly = true)
     public List<LeagueResponse> getPublicLeagues() {
         return leagueRepository.findByIsPublic(true).stream()
                 .map(this::mapToLeagueResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<LeagueResponse> getUserLeagues(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -103,6 +119,9 @@ public class LeagueService {
         member.setRole("MEMBER");
         leagueMemberRepository.save(member);
 
+        // Update in-memory list for response
+        league.getMembers().add(member);
+
         return mapToLeagueResponse(league);
     }
 
@@ -125,6 +144,9 @@ public class LeagueService {
         member.setLeague(league);
         member.setRole("MEMBER");
         leagueMemberRepository.save(member);
+
+        // Update in-memory list for response
+        league.getMembers().add(member);
 
         return mapToLeagueResponse(league);
     }
@@ -149,17 +171,52 @@ public class LeagueService {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("League not found"));
 
-        User user = userRepository.findByUsername(username)
+        User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean isMember = leagueMemberRepository.existsByUserIdAndLeagueId(user.getId(), leagueId);
+        // Get all members for this league
+        List<LeagueMember> members = leagueMemberRepository.findByLeagueId(leagueId);
 
-        // Fetch all matches for the league to calculate stats
+        // Get all matches for this league
         List<Match> matches = matchRepository.findByLeagueIdOrderByPlayedAtDesc(leagueId);
 
-        List<LeagueMemberResponse> members = leagueMemberRepository.findByLeagueId(leagueId).stream()
-                .map(member -> mapToLeagueMemberResponse(member, matches))
-                .collect(Collectors.toList());
+        // Calculate stats for all members
+        // Initialize stats map
+        Map<Long, MemberStats> statsMap = new HashMap<>();
+        for (LeagueMember member : members) {
+            statsMap.put(member.getUser().getId(), new MemberStats());
+        }
+
+        // Process matches to calculate wins, losses, and trends
+        for (Match match : matches) {
+            Long winnerId = match.getWinner().getId();
+            Long loserId = match.getLoser().getId();
+
+            if (statsMap.containsKey(winnerId)) {
+                MemberStats stats = statsMap.get(winnerId);
+                stats.wins++;
+                stats.addTrend('W');
+            }
+
+            if (statsMap.containsKey(loserId)) {
+                MemberStats stats = statsMap.get(loserId);
+                stats.losses++;
+                stats.addTrend('L');
+            }
+        }
+
+        // Build response
+        List<LeagueMemberResponse> memberResponses = new ArrayList<>();
+        boolean isMember = false;
+
+        for (LeagueMember member : members) {
+            if (member.getUser().getId().equals(currentUser.getId())) {
+                isMember = true;
+            }
+
+            MemberStats stats = statsMap.get(member.getUser().getId());
+            memberResponses.add(mapToLeagueMemberResponse(member, stats));
+        }
 
         LeagueDetailResponse response = new LeagueDetailResponse();
         response.setId(league.getId());
@@ -167,25 +224,15 @@ public class LeagueService {
         response.setDescription(league.getDescription());
         response.setIsPublic(league.getIsPublic());
         response.setCreatedByUsername(league.getCreatedBy().getUsername());
-        response.setCreatedAt(league.getCreatedAt()); // Keep this line
+        response.setCreatedAt(league.getCreatedAt());
         response.setMemberCount(members.size());
-        response.setMembers(members);
+        response.setMembers(memberResponses);
 
-        // Only show invite code if user is a member
-        if (isMember) {
+        // Only show invite code if user is a member or owner or super admin
+        if (isMember || league.getCreatedBy().getId().equals(currentUser.getId()) || isSuperAdmin(currentUser)) {
             response.setInviteCode(league.getInviteCode());
         }
 
-        return response;
-    }
-
-    private LeagueMemberResponse mapToLeagueMemberResponse(LeagueMember member, List<Match> matches) {
-        LeagueMemberResponse response = new LeagueMemberResponse();
-        response.setUserId(member.getUser().getId());
-        response.setUsername(member.getUser().getUsername());
-        response.setRole(member.getRole());
-        response.setElo(member.getElo());
-        response.setJoinedAt(member.getJoinedAt());
         return response;
     }
 
@@ -196,7 +243,7 @@ public class LeagueService {
         User reporter = userRepository.findByUsername(reporterUsername)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!leagueMemberRepository.existsByUserIdAndLeagueId(reporter.getId(), leagueId)) {
+        if (!leagueMemberRepository.existsByUserIdAndLeagueId(reporter.getId(), leagueId) && !isSuperAdmin(reporter)) {
             throw new RuntimeException("You must be a member of the league to record matches");
         }
 
@@ -266,6 +313,20 @@ public class LeagueService {
         return response;
     }
 
+    private LeagueMemberResponse mapToLeagueMemberResponse(LeagueMember member, MemberStats stats) {
+        LeagueMemberResponse response = new LeagueMemberResponse();
+        response.setUserId(member.getUser().getId());
+        response.setUsername(member.getUser().getUsername());
+        response.setRole(member.getRole());
+        response.setElo(member.getElo());
+        response.setJoinedAt(member.getJoinedAt());
+        response.setWins(stats.wins);
+        response.setLosses(stats.losses);
+        response.setTrend(stats.trend.toString());
+        // Last ELO change logic could be added here if tracked in stats
+        return response;
+    }
+
     private String generateInviteCode() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();
@@ -281,5 +342,18 @@ public class LeagueService {
         }
 
         return code.toString();
+    }
+
+    // Helper class for calculating member stats
+    private static class MemberStats {
+        int wins = 0;
+        int losses = 0;
+        StringBuilder trend = new StringBuilder();
+
+        void addTrend(char result) {
+            if (trend.length() < 5) {
+                trend.append(result);
+            }
+        }
     }
 }

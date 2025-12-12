@@ -30,7 +30,12 @@
                             <h1 id="league-name" style="margin-bottom: 0;"></h1>
                             <span id="league-badge"></span>
                         </div>
-                        <p id="league-description" style="color: var(--text-secondary);"></p>
+                        <p id="league-description" style="color: var(--text-secondary); margin-bottom: 0.5rem;"></p>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Created by <strong id="league-creator" style="color: var(--text-primary);"></strong> •
+                            <span id="league-member-count" style="color: var(--text-primary); font-weight: 600;"></span>
+                            members
+                        </p>
                     </div>
                 </div>
 
@@ -124,7 +129,7 @@
     <script src="app.js"></script>
     <script>
         // Check authentication
-        if (!isAuthenticated()) {
+        if (typeof isAuthenticated !== 'function' || !isAuthenticated()) {
             window.location.href = 'login.html';
         }
 
@@ -137,15 +142,31 @@
         }
 
         // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            logout();
-            window.location.href = 'index.html';
-        });
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                logout();
+                window.location.href = 'index.html';
+            });
+        }
 
         // Load league details
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadLeagueDetails(leagueId);
+            log('DOMContentLoaded event fired.');
+            if (leagueId) {
+                log('Calling loadLeagueDetails...');
+                await loadLeagueDetails(leagueId);
+            }
         });
+
+        // Override loadLeagueDetails to add logging
+        const originalLoadLeagueDetails = window.loadLeagueDetails; // In case it was defined in app.js? No, it's defined below.
+
+        // We are redefining it here, which is fine as it was defined in the inline script before.
+        // But wait, in the original file, loadLeagueDetails was defined INSIDE the <script> block I am replacing?
+        // Yes, I am replacing the whole script block.
+
+        // ... (Rest of the script logic needs to be included)
 
         // Join league handler
         document.getElementById('join-league-btn').addEventListener('click', async () => {
@@ -315,8 +336,9 @@
                 renderMembers(league.members);
 
             } catch (error) {
-                document.getElementById('league-loading').innerHTML =
-                    '<p style="text-align: center; color: #f5576c;">Failed to load league details</p>';
+                const loadingDiv = document.getElementById('league-loading');
+                loadingDiv.classList.remove('spinner');
+                loadingDiv.innerHTML = `<p style="text-align: center; color: #f5576c;">Failed to load league details: ${error.message}</p>`;
             }
         }
 
@@ -495,3 +517,7 @@
                 renderMatches(leagueId);
             }
         }
+    </script>
+</body>
+
+</html>
