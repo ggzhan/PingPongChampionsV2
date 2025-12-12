@@ -15,6 +15,7 @@ import org.springframework.transaction.CannotCreateTransactionException;
 import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.sql.SQLTransientConnectionException;
 
 /**
@@ -65,8 +66,8 @@ public class DatabaseRetryAspect {
                     throw e;
                 }
 
-                log.warn("Database connection failure in {} (attempt {}/{}). Retrying in {}ms...",
-                        methodName, attempt, maxAttempts, delayMs);
+                log.warn("Database connection failure in {} (attempt {}/{}). Retrying in {}ms... Error: {}",
+                        methodName, attempt, maxAttempts, delayMs, e.getMessage());
 
                 try {
                     Thread.sleep(delayMs);
@@ -108,8 +109,9 @@ public class DatabaseRetryAspect {
             return true;
         }
 
-        // SQL connection exceptions
+        // SQL connection/timeout exceptions
         if (e instanceof SQLTransientConnectionException ||
+                e instanceof SQLTimeoutException ||
                 e instanceof ConnectException) {
             return true;
         }
@@ -124,16 +126,37 @@ public class DatabaseRetryAspect {
             }
         }
 
+        // Check exception class name for HikariCP and other pool exceptions
+        String className = e.getClass().getName().toLowerCase();
+        if (className.contains("hikari") ||
+                className.contains("pool") ||
+                className.contains("connection")) {
+            return true;
+        }
+
         // Check exception message for common connection error patterns
         String message = e.getMessage();
         if (message != null) {
             String lowerMessage = message.toLowerCase();
-            return lowerMessage.contains("connection") &&
+
+            // HikariCP specific patterns
+            if (lowerMessage.contains("hikaripool") ||
+                    lowerMessage.contains("not available") ||
+                    lowerMessage.contains("request timed out")) {
+                return true;
+            }
+
+            // General connection patterns
+            if (lowerMessage.contains("connection") &&
                     (lowerMessage.contains("refused") ||
                             lowerMessage.contains("timeout") ||
+                            lowerMessage.contains("timed out") ||
                             lowerMessage.contains("unavailable") ||
                             lowerMessage.contains("closed") ||
-                            lowerMessage.contains("reset"));
+                            lowerMessage.contains("reset") ||
+                            lowerMessage.contains("failed"))) {
+                return true;
+            }
         }
 
         return false;

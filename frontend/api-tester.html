@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester - Ping Pong Champions (Admin Only)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .api-section {
+            margin-bottom: 2rem;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .api-section-header {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .api-section-header:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+
+        .api-section-body {
+            padding: 1.5rem;
+            display: none;
+            background: var(--card-bg);
+        }
+
+        .api-section-body.open {
+            display: block;
+        }
+
+        .endpoint {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .method {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .method-get {
+            background: #4facfe;
+            color: white;
+        }
+
+        .method-post {
+            background: #667eea;
+            color: white;
+        }
+
+        .method-delete {
+            background: #f5576c;
+            color: white;
+        }
+
+        .endpoint-url {
+            font-family: monospace;
+            color: var(--text-secondary);
+        }
+
+        .response-box {
+            background: #1a1a2e;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .response-success {
+            border-color: #4facfe;
+        }
+
+        .response-error {
+            border-color: #f5576c;
+        }
+
+        .mini-form {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .mini-form input,
+        .mini-form textarea {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .mini-form textarea {
+            min-height: 80px;
+        }
+
+        .btn-test {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .admin-warning {
+            background: rgba(245, 87, 108, 0.2);
+            border: 1px solid #f5576c;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .access-denied {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">🔧 API Tester</div>
+            <div class="nav-buttons">
+                <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Access Check -->
+            <div id="access-check" style="display: none;">
+                <div class="spinner"></div>
+                <p class="text-center" style="color: var(--text-secondary);">Verifying admin access...</p>
+            </div>
+
+            <!-- Access Denied -->
+            <div id="access-denied" class="access-denied hidden">
+                <h2 style="color: #f5576c;">🚫 Access Denied</h2>
+                <p style="color: var(--text-secondary); margin-top: 1rem;">
+                    This page is only accessible to super administrators.
+                </p>
+                <a href="dashboard.html" class="btn btn-primary" style="margin-top: 2rem;">Go to Dashboard</a>
+            </div>
+
+            <!-- API Tester Content -->
+            <div id="api-tester" class="hidden">
+                <h1 class="text-center mb-2">API Tester</h1>
+                <div class="admin-warning">
+                    ⚠️ Super Admin Access Only - Use responsibly
+                </div>
+
+                <!-- Auth Endpoints -->
+                <div class="api-section">
+                    <div class="api-section-header" onclick="toggleSection(this)">
+                        <h3>🔐 Authentication</h3>
+                        <span>▼</span>
+                    </div>
+                    <div class="api-section-body">
+                        <!-- Register -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/auth/register</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="text" id="reg-username" placeholder="Username">
+                                <input type="email" id="reg-email" placeholder="Email">
+                                <input type="password" id="reg-password" placeholder="Password">
+                                <button class="btn btn-primary btn-test" onclick="testRegister()">Test Register</button>
+                            </div>
+                            <div id="reg-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Login -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/auth/login</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="text" id="login-username" placeholder="Username">
+                                <input type="password" id="login-password" placeholder="Password">
+                                <button class="btn btn-primary btn-test" onclick="testLogin()">Test Login</button>
+                            </div>
+                            <div id="login-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Forgot Password -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/auth/forgot-password</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="email" id="forgot-email" placeholder="Email">
+                                <button class="btn btn-primary btn-test" onclick="testForgotPassword()">Test Forgot
+                                    Password</button>
+                            </div>
+                            <div id="forgot-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Reset Password -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/auth/reset-password</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="email" id="reset-email" placeholder="Email">
+                                <input type="text" id="reset-code" placeholder="6-digit Code">
+                                <input type="password" id="reset-newpassword" placeholder="New Password">
+                                <button class="btn btn-primary btn-test" onclick="testResetPassword()">Test Reset
+                                    Password</button>
+                            </div>
+                            <div id="reset-response" class="response-box hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- League Endpoints -->
+                <div class="api-section">
+                    <div class="api-section-header" onclick="toggleSection(this)">
+                        <h3>🏓 Leagues</h3>
+                        <span>▼</span>
+                    </div>
+                    <div class="api-section-body">
+                        <!-- Get Public Leagues -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-get">GET</span>
+                                <span class="endpoint-url">/api/leagues/public</span>
+                            </div>
+                            <button class="btn btn-primary btn-test" onclick="testGetPublicLeagues()">Test Get Public
+                                Leagues</button>
+                            <div id="public-leagues-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Get My Leagues -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-get">GET</span>
+                                <span class="endpoint-url">/api/leagues/my</span>
+                            </div>
+                            <button class="btn btn-primary btn-test" onclick="testGetMyLeagues()">Test Get My
+                                Leagues</button>
+                            <div id="my-leagues-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Get League Details -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-get">GET</span>
+                                <span class="endpoint-url">/api/leagues/{id}</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="number" id="league-detail-id" placeholder="League ID">
+                                <button class="btn btn-primary btn-test" onclick="testGetLeagueDetails()">Test Get
+                                    League Details</button>
+                            </div>
+                            <div id="league-detail-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Create League -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/leagues</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="text" id="create-league-name" placeholder="League Name">
+                                <textarea id="create-league-desc" placeholder="Description"></textarea>
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" id="create-league-public" checked> Public League
+                                </label>
+                                <button class="btn btn-primary btn-test" onclick="testCreateLeague()">Test Create
+                                    League</button>
+                            </div>
+                            <div id="create-league-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Join Public League -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/leagues/{id}/join</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="number" id="join-league-id" placeholder="League ID">
+                                <button class="btn btn-primary btn-test" onclick="testJoinPublicLeague()">Test Join
+                                    Public League</button>
+                            </div>
+                            <div id="join-league-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Join Private League -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/leagues/join-private</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="text" id="join-private-code" placeholder="Invite Code">
+                                <button class="btn btn-primary btn-test" onclick="testJoinPrivateLeague()">Test Join
+                                    Private League</button>
+                            </div>
+                            <div id="join-private-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Leave League -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-delete">DELETE</span>
+                                <span class="endpoint-url">/api/leagues/{id}/leave</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="number" id="leave-league-id" placeholder="League ID">
+                                <button class="btn btn-secondary btn-test" onclick="testLeaveLeague()">Test Leave
+                                    League</button>
+                            </div>
+                            <div id="leave-league-response" class="response-box hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Match Endpoints -->
+                <div class="api-section">
+                    <div class="api-section-header" onclick="toggleSection(this)">
+                        <h3>🎯 Matches</h3>
+                        <span>▼</span>
+                    </div>
+                    <div class="api-section-body">
+                        <!-- Get Matches -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-get">GET</span>
+                                <span class="endpoint-url">/api/leagues/{id}/matches</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="number" id="get-matches-league-id" placeholder="League ID">
+                                <button class="btn btn-primary btn-test" onclick="testGetMatches()">Test Get
+                                    Matches</button>
+                            </div>
+                            <div id="get-matches-response" class="response-box hidden"></div>
+                        </div>
+
+                        <!-- Record Match -->
+                        <div class="endpoint">
+                            <div class="endpoint-header">
+                                <span class="method method-post">POST</span>
+                                <span class="endpoint-url">/api/leagues/{id}/matches</span>
+                            </div>
+                            <div class="mini-form">
+                                <input type="number" id="record-match-league-id" placeholder="League ID">
+                                <input type="number" id="record-match-winner-id" placeholder="Winner User ID">
+                                <input type="number" id="record-match-loser-id" placeholder="Loser User ID">
+                                <button class="btn btn-primary btn-test" onclick="testRecordMatch()">Test Record
+                                    Match</button>
+                            </div>
+                            <div id="record-match-response" class="response-box hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ping Pong Champions. All rights reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Super admin emails (must match backend)
+        const SUPER_ADMIN_EMAILS = [
+            'gerald.zhang@gmail.com',
+            'markus.koenigreich@gmail.com'
+        ];
+
+        // Check access on page load
+        async function checkAccess() {
+            const checkDiv = document.getElementById('access-check');
+            const deniedDiv = document.getElementById('access-denied');
+            const testerDiv = document.getElementById('api-tester');
+
+            checkDiv.style.display = 'block';
+
+            // Check if logged in
+            const token = localStorage.getItem('auth_token');
+            const userStr = localStorage.getItem('user_info');
+
+            if (!token || !userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            const email = user.email;
+
+            // Check if super admin
+            if (!email || !SUPER_ADMIN_EMAILS.includes(email)) {
+                checkDiv.style.display = 'none';
+                deniedDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Grant access
+            checkDiv.style.display = 'none';
+            testerDiv.classList.remove('hidden');
+        }
+
+        function toggleSection(header) {
+            const body = header.nextElementSibling;
+            const arrow = header.querySelector('span');
+            body.classList.toggle('open');
+            arrow.textContent = body.classList.contains('open') ? '▲' : '▼';
+        }
+
+        function showResponse(elementId, data, isSuccess) {
+            const el = document.getElementById(elementId);
+            el.classList.remove('hidden', 'response-success', 'response-error');
+            el.classList.add(isSuccess ? 'response-success' : 'response-error');
+            el.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Auth Tests
+        async function testRegister() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('reg-username').value,
+                        email: document.getElementById('reg-email').value,
+                        password: document.getElementById('reg-password').value
+                    })
+                });
+                const data = await response.json();
+                showResponse('reg-response', data, response.ok);
+            } catch (e) {
+                showResponse('reg-response', { error: e.message }, false);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('login-username').value,
+                        password: document.getElementById('login-password').value
+                    })
+                });
+                const data = await response.json();
+                showResponse('login-response', data, response.ok);
+            } catch (e) {
+                showResponse('login-response', { error: e.message }, false);
+            }
+        }
+
+        async function testForgotPassword() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('forgot-email').value
+                    })
+                });
+                const data = await response.json();
+                showResponse('forgot-response', data, response.ok);
+            } catch (e) {
+                showResponse('forgot-response', { error: e.message }, false);
+            }
+        }
+
+        async function testResetPassword() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('reset-email').value,
+                        code: document.getElementById('reset-code').value,
+                        newPassword: document.getElementById('reset-newpassword').value
+                    })
+                });
+                const data = await response.json();
+                showResponse('reset-response', data, response.ok);
+            } catch (e) {
+                showResponse('reset-response', { error: e.message }, false);
+            }
+        }
+
+        // League Tests
+        async function testGetPublicLeagues() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/leagues/public`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                showResponse('public-leagues-response', data, response.ok);
+            } catch (e) {
+                showResponse('public-leagues-response', { error: e.message }, false);
+            }
+        }
+
+        async function testGetMyLeagues() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/leagues/my`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                showResponse('my-leagues-response', data, response.ok);
+            } catch (e) {
+                showResponse('my-leagues-response', { error: e.message }, false);
+            }
+        }
+
+        async function testGetLeagueDetails() {
+            try {
+                const id = document.getElementById('league-detail-id').value;
+                const response = await fetch(`${API_BASE_URL}/leagues/${id}`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                showResponse('league-detail-response', data, response.ok);
+            } catch (e) {
+                showResponse('league-detail-response', { error: e.message }, false);
+            }
+        }
+
+        async function testCreateLeague() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/leagues`, {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('create-league-name').value,
+                        description: document.getElementById('create-league-desc').value,
+                        isPublic: document.getElementById('create-league-public').checked
+                    })
+                });
+                const data = await response.json();
+                showResponse('create-league-response', data, response.ok);
+            } catch (e) {
+                showResponse('create-league-response', { error: e.message }, false);
+            }
+        }
+
+        async function testJoinPublicLeague() {
+            try {
+                const id = document.getElementById('join-league-id').value;
+                const response = await fetch(`${API_BASE_URL}/leagues/${id}/join`, {
+                    method: 'POST',
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                showResponse('join-league-response', data, response.ok);
+            } catch (e) {
+                showResponse('join-league-response', { error: e.message }, false);
+            }
+        }
+
+        async function testJoinPrivateLeague() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/leagues/join-private`, {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        inviteCode: document.getElementById('join-private-code').value
+                    })
+                });
+                const data = await response.json();
+                showResponse('join-private-response', data, response.ok);
+            } catch (e) {
+                showResponse('join-private-response', { error: e.message }, false);
+            }
+        }
+
+        async function testLeaveLeague() {
+            try {
+                const id = document.getElementById('leave-league-id').value;
+                const response = await fetch(`${API_BASE_URL}/leagues/${id}/leave`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                if (response.ok) {
+                    showResponse('leave-league-response', { message: 'Successfully left league' }, true);
+                } else {
+                    const data = await response.json();
+                    showResponse('leave-league-response', data, false);
+                }
+            } catch (e) {
+                showResponse('leave-league-response', { error: e.message }, false);
+            }
+        }
+
+        // Match Tests
+        async function testGetMatches() {
+            try {
+                const id = document.getElementById('get-matches-league-id').value;
+                const response = await fetch(`${API_BASE_URL}/leagues/${id}/matches`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                showResponse('get-matches-response', data, response.ok);
+            } catch (e) {
+                showResponse('get-matches-response', { error: e.message }, false);
+            }
+        }
+
+        async function testRecordMatch() {
+            try {
+                const leagueId = document.getElementById('record-match-league-id').value;
+                const response = await fetch(`${API_BASE_URL}/leagues/${leagueId}/matches`, {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        winnerId: parseInt(document.getElementById('record-match-winner-id').value),
+                        loserId: parseInt(document.getElementById('record-match-loser-id').value)
+                    })
+                });
+                if (response.ok) {
+                    showResponse('record-match-response', { message: 'Match recorded successfully' }, true);
+                } else {
+                    const text = await response.text();
+                    showResponse('record-match-response', { error: text }, false);
+                }
+            } catch (e) {
+                showResponse('record-match-response', { error: e.message }, false);
+            }
+        }
+
+        // Initialize
+        checkAccess();
+    </script>
+</body>
+
+</html>
