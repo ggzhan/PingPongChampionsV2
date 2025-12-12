@@ -309,7 +309,7 @@ public class LeagueService {
         response.setInviteCode(league.getInviteCode());
         response.setCreatedByUsername(league.getCreatedBy().getUsername());
         response.setCreatedAt(league.getCreatedAt());
-        response.setMemberCount(league.getMembers().size());
+        response.setMemberCount((int) leagueMemberRepository.countByLeagueId(league.getId()));
         return response;
     }
 
