@@ -41,6 +41,9 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private Set<League> createdLeagues = new HashSet<>();
 

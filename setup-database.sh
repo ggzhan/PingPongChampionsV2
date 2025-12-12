@@ -102,13 +102,21 @@ else
     echo -e "${RED}Warning: database/03_add_elo_rating.sql not found${NC}"
 fi
 
- if [ -f "database/04_create_matches_table.sql" ]; then
-        echo -e "${YELLOW}Creating matches table...${NC}"
-        psql "$DB_URL" -f database/04_create_matches_table.sql
-        echo -e "${GREEN}✓ Matches table created successfully!${NC}"
-    else
-        echo -e "${RED}Warning: database/04_create_matches_table.sql not found${NC}"
-    fi
+if [ -f "database/04_create_matches_table.sql" ]; then
+    echo -e "${YELLOW}Creating matches table...${NC}"
+    psql "$DB_URL" -f database/04_create_matches_table.sql
+    echo -e "${GREEN}✓ Matches table created successfully!${NC}"
+else
+    echo -e "${RED}Warning: database/04_create_matches_table.sql not found${NC}"
+fi
+
+if [ -f "database/05_verification_codes.sql" ]; then
+    echo -e "${YELLOW}Creating verification codes table...${NC}"
+    psql "$DB_URL" -f database/05_verification_codes.sql
+    echo -e "${GREEN}✓ Verification codes table created successfully!${NC}"
+else
+    echo -e "${RED}Warning: database/05_verification_codes.sql not found${NC}"
+fi
 
 # Verify tables were created
 echo ""

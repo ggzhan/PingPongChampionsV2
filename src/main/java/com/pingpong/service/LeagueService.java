@@ -1,5 +1,6 @@
 package com.pingpong.service;
 
+import com.pingpong.aspect.RetryOnDbFailure;
 import com.pingpong.dto.CreateLeagueRequest;
 import com.pingpong.dto.JoinPrivateLeagueRequest;
 import com.pingpong.dto.LeagueDetailResponse;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@RetryOnDbFailure(maxAttempts = 3, initialDelayMs = 1000, multiplier = 2.0)
 public class LeagueService {
 
     private final LeagueRepository leagueRepository;
