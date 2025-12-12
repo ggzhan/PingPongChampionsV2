@@ -1,5 +1,16 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:8080/api';
+// Dynamically determine API URL:
+// - In production (served from same origin): use relative path '/api'
+// - In local development (file:// or different port): use localhost:8080
+const API_BASE_URL = (() => {
+    const isLocalFile = window.location.protocol === 'file:';
+    const isLocalDevServer = window.location.hostname === 'localhost' && window.location.port !== '8080';
+
+    if (isLocalFile || isLocalDevServer) {
+        return 'http://localhost:8080/api';
+    }
+    return '/api';  // Relative path works when frontend is served by the backend
+})();
 
 // Local Storage Keys
 const TOKEN_KEY = 'auth_token';
