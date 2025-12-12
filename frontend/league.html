@@ -152,21 +152,10 @@
 
         // Load league details
         document.addEventListener('DOMContentLoaded', async () => {
-            log('DOMContentLoaded event fired.');
             if (leagueId) {
-                log('Calling loadLeagueDetails...');
                 await loadLeagueDetails(leagueId);
             }
         });
-
-        // Override loadLeagueDetails to add logging
-        const originalLoadLeagueDetails = window.loadLeagueDetails; // In case it was defined in app.js? No, it's defined below.
-
-        // We are redefining it here, which is fine as it was defined in the inline script before.
-        // But wait, in the original file, loadLeagueDetails was defined INSIDE the <script> block I am replacing?
-        // Yes, I am replacing the whole script block.
-
-        // ... (Rest of the script logic needs to be included)
 
         // Join league handler
         document.getElementById('join-league-btn').addEventListener('click', async () => {
