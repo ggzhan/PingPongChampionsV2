@@ -29,8 +29,6 @@ header {
     background: rgba(15, 15, 35, 0.95);
     backdrop-filter: blur(10px);
     padding: 1.5rem 2rem;
-    position: sticky;
-    top: 0;
     z-index: 100;
     border-bottom: 1px solid var(--card-border);
 }
