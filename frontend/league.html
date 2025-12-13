@@ -47,7 +47,7 @@
                         Record Match
                     </button>
                     <div id="invite-code-section" class="hidden"
-                        style="display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 0 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
+                        style="align-items: center; background: rgba(255,255,255,0.05); padding: 0 1rem; border-radius: 8px; border: 1px solid var(--card-border);">
                         <span style="color: var(--text-secondary); margin-right: 0.5rem;">Invite Code:</span>
                         <span id="league-invite-code"
                             style="font-family: monospace; font-weight: 600; color: #667eea;"></span>
@@ -305,10 +305,14 @@
                     recordBtn.classList.remove('hidden');
                     leaveBtn.classList.remove('hidden');
 
-                    // Show invite code if available (only for members)
-                    if (league.inviteCode) {
+                    // Show invite code if available (only for members of private leagues)
+                    if (league.inviteCode && !league.isPublic) {
                         inviteSection.classList.remove('hidden');
+                        inviteSection.style.display = 'flex';
                         document.getElementById('league-invite-code').textContent = league.inviteCode;
+                    } else {
+                        inviteSection.classList.add('hidden');
+                        inviteSection.style.display = 'none';
                     }
                 } else {
                     recordBtn.classList.add('hidden');

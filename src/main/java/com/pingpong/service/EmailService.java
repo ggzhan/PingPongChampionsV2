@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,6 +21,7 @@ public class EmailService {
     @Value("${app.name:Ping Pong Champions}")
     private String appName;
 
+    @Async
     public void sendVerificationEmail(String toEmail, String code) {
         String subject = appName + " - Verify Your Email";
         String body = String.format(
@@ -33,6 +35,7 @@ public class EmailService {
         log.info("Verification email sent to {} with code {}", toEmail, code);
     }
 
+    @Async
     public void sendPasswordResetEmail(String toEmail, String code) {
         String subject = appName + " - Password Reset";
         String body = String.format(
