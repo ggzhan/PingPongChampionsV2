@@ -22,7 +22,7 @@ services:
       - SMTP_STARTTLS_REQUIRED=${SMTP_STARTTLS_REQUIRED}
       - SMTP_SOCKET_FACTORY=${SMTP_SOCKET_FACTORY}
     env_file:
-      - .env
+      - local.env
     depends_on:
       - db
     networks:
