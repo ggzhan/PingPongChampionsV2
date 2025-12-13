@@ -60,6 +60,17 @@
 
     <script src="app.js"></script>
     <script>
+        // Check for success message from registration
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('registered') === 'true') {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = 'Registration successful! Please check your email to verify your account.';
+            errorDiv.style.color = '#2ecc71'; // Success green
+            errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+            errorDiv.style.borderColor = '#2ecc71';
+            errorDiv.classList.remove('hidden');
+        }
+
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -67,13 +78,19 @@
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-message');
 
+            // Reset error style to default (red) for new attempts
+            errorDiv.style.color = '';
+            errorDiv.style.backgroundColor = '';
+            errorDiv.style.borderColor = '';
+            errorDiv.classList.add('hidden');
+
             try {
                 const response = await login(username, password);
                 if (response) {
                     window.location.href = 'dashboard.html';
                 }
             } catch (error) {
-                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.textContent = error.message;
                 errorDiv.classList.remove('hidden');
             }
         });

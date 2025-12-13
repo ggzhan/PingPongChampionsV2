@@ -50,7 +50,14 @@ async function login(username, password) {
     });
 
     if (!response.ok) {
-        throw new Error('Login failed');
+        let errorMessage = 'Login failed';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+            // If response is not JSON, use generic message
+        }
+        throw new Error(errorMessage);
     }
 
     const data = await response.json();

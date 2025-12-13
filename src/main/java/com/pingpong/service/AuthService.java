@@ -79,6 +79,10 @@ public class AuthService {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new RuntimeException("Email not verified. Please check your inbox.");
+        }
+
         // Generate JWT token
         String jwtToken = jwtService.generateToken(user.getUsername());
 

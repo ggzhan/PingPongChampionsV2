@@ -86,7 +86,7 @@
             try {
                 const response = await register(username, email, password);
                 if (response) {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'login.html?registered=true';
                 }
             } catch (error) {
                 errorDiv.textContent = error.message || 'Registration failed. Username or email may already exist.';
