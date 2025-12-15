@@ -57,6 +57,16 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmailByCode(@RequestParam String code) {
+        try {
+            authService.verifyEmailByCode(code);
+            return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         // Always return success to not reveal if email exists

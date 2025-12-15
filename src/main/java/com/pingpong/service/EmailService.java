@@ -21,18 +21,23 @@ public class EmailService {
     @Value("${app.name:Ping Pong Champions}")
     private String appName;
 
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
     @Async
     public void sendVerificationEmail(String toEmail, String code) {
         String subject = appName + " - Verify Your Email";
+        String verificationLink = baseUrl + "/verify-email.html?code=" + code;
         String body = String.format(
                 "Welcome to %s!\n\n" +
-                        "Your email verification code is: %s\n\n" +
-                        "This code will expire in 15 minutes.\n\n" +
+                        "Please click the link below to verify your email address:\n\n" +
+                        "%s\n\n" +
+                        "This link will expire in 15 minutes.\n\n" +
                         "If you didn't create an account, please ignore this email.",
-                appName, code);
+                appName, verificationLink);
 
         sendEmail(toEmail, subject, body);
-        log.info("Verification email sent to {} with code {}", toEmail, code);
+        log.info("Verification email sent to {} with link {}", toEmail, verificationLink);
     }
 
     @Async

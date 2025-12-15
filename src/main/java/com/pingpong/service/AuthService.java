@@ -150,6 +150,29 @@ public class AuthService {
     }
 
     @Transactional
+    public void verifyEmailByCode(String code) {
+        VerificationCode verificationCode = verificationCodeRepository
+                .findByCodeAndTypeAndUsedFalse(code, TYPE_EMAIL_VERIFY)
+                .orElseThrow(() -> new RuntimeException("Invalid verification code"));
+
+        if (verificationCode.isExpired()) {
+            throw new RuntimeException("Verification code has expired");
+        }
+
+        User user = verificationCode.getUser();
+
+        // Mark code as used
+        verificationCode.setUsed(true);
+        verificationCodeRepository.save(verificationCode);
+
+        // Mark user as verified
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        log.info("Email verified for user: {} via code link", user.getUsername());
+    }
+
+    @Transactional
     public void sendPasswordResetEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElse(null);

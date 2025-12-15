@@ -60,11 +60,18 @@
 
     <script src="app.js"></script>
     <script>
-        // Check for success message from registration
+        // Check for success message from registration or verification
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('registered') === 'true') {
             const errorDiv = document.getElementById('error-message');
             errorDiv.textContent = 'Registration successful! Please check your email to verify your account.';
+            errorDiv.style.color = '#2ecc71'; // Success green
+            errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+            errorDiv.style.borderColor = '#2ecc71';
+            errorDiv.classList.remove('hidden');
+        } else if (urlParams.get('verified') === 'true') {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = 'Email verified successfully! You can now login.';
             errorDiv.style.color = '#2ecc71'; // Success green
             errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
             errorDiv.style.borderColor = '#2ecc71';
