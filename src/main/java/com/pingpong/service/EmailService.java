@@ -27,7 +27,9 @@ public class EmailService {
     @Async
     public void sendVerificationEmail(String toEmail, String code) {
         String subject = appName + " - Verify Your Email";
-        String verificationLink = baseUrl + "/verify-email.html?code=" + code;
+        // Ensure baseUrl doesn't have trailing slash and construct the link correctly
+        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String verificationLink = cleanBaseUrl + "/verify-email.html?code=" + code;
         String body = String.format(
                 "Welcome to %s!\n\n" +
                         "Please click the link below to verify your email address:\n\n" +
