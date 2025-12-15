@@ -27,7 +27,7 @@ public class EmailService {
     @Async
     public void sendVerificationEmail(String toEmail, String code) {
         String subject = appName + " - Verify Your Email";
-        String verificationLink = baseUrl + "/auth/verify-email.html?code=" + code;
+        String verificationLink = baseUrl + "/verify-email.html?code=" + code;
         String body = String.format(
                 "Welcome to %s!\n\n" +
                         "Please click the link below to verify your email address:\n\n" +
