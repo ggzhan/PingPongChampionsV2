@@ -36,18 +36,8 @@
 
     <script src="app.js"></script>
     <script>
-        // Dynamically determine API URL (same logic as app.js)
-        var API_BASE_URL = (() => {
-            const isLocalFile = window.location.protocol === 'file:';
-            const isLocalDevServer = window.location.hostname === 'localhost' && window.location.port !== '8080';
-
-            if (isLocalFile || isLocalDevServer) {
-                return 'http://localhost:8080/api';
-            }
-            return '/api';
-        })();
-
-        console.log('Page loaded, API_BASE_URL:', API_BASE_URL);
+        // Use API_BASE_URL from app.js (already declared there)
+        console.log('Page loaded, API_BASE_URL:', typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'not defined');
 
         async function verifyEmail() {
             console.log('verifyEmail function called');
