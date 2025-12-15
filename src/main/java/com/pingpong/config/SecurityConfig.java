@@ -1,7 +1,6 @@
 package com.pingpong.config;
 
 import com.pingpong.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -39,8 +38,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/leagues/public").permitAll()
-                        .requestMatchers("/", "/index.html", "/*.html", "/*.css", "/*.js", "/assets/**", "/error",
-                                "/favicon.ico")
+                        .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/verify-email.html",
+                                "/forgot-password.html", "/reset-password.html", "/*.html", "/*.css", "/*.js",
+                                "/assets/**", "/error", "/favicon.ico")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session

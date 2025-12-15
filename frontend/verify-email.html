@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Ping Pong Champions</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">Ping Pong Champions</div>
+            <div class="nav-buttons">
+                <a href="index.html" class="btn btn-secondary">Home</a>
+                <a href="login.html" class="btn btn-primary">Login</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container card">
+            <h2 class="text-center mb-2">Verifying Email</h2>
+            <div id="status-message" class="text-center" style="margin-top: 2rem;">
+                <p>Please wait while we verify your email...</p>
+            </div>
+            <div id="error-message" class="error-message hidden"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ping Pong Champions. All rights reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Dynamically determine API URL (same logic as app.js)
+        const API_BASE_URL = (() => {
+            const isLocalFile = window.location.protocol === 'file:';
+            const isLocalDevServer = window.location.hostname === 'localhost' && window.location.port !== '8080';
+
+            if (isLocalFile || isLocalDevServer) {
+                return 'http://localhost:8080/api';
+            }
+            return '/api';
+        })();
+
+        async function verifyEmail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const statusDiv = document.getElementById('status-message');
+            const errorDiv = document.getElementById('error-message');
+
+            if (!code) {
+                statusDiv.innerHTML = '<p style="color: #f5576c;">No verification code provided.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/verify-email?code=${encodeURIComponent(code)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Verification failed');
+                }
+
+                // Success
+                statusDiv.innerHTML = `
+                    <p style="color: #2ecc71; font-size: 1.1rem; margin-bottom: 1rem;">
+                        ✓ Email verified successfully!
+                    </p>
+                    <p style="color: var(--text-secondary);">
+                        Redirecting to login page...
+                    </p>
+                `;
+
+                // Redirect to login page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html?verified=true';
+                }, 2000);
+
+            } catch (error) {
+                statusDiv.innerHTML = '';
+                errorDiv.textContent = error.message || 'Verification failed. The link may have expired or is invalid.';
+                errorDiv.classList.remove('hidden');
+                
+                // Show link to resend verification
+                const resendDiv = document.createElement('div');
+                resendDiv.className = 'text-center';
+                resendDiv.style.marginTop = '1rem';
+                resendDiv.innerHTML = `
+                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        Need a new verification link?
+                    </p>
+                    <a href="register.html" style="color: #667eea;">Register again</a> or 
+                    <a href="login.html" style="color: #667eea;">Go to login</a>
+                `;
+                document.querySelector('.form-container').appendChild(resendDiv);
+            }
+        }
+
+        // Verify on page load
+        verifyEmail();
+    </script>
+</body>
+
+</html>
+
