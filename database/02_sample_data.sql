@@ -3,10 +3,10 @@
 
 -- Insert sample users
 INSERT INTO users (username, email, password) VALUES
-('john_doe', 'john@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'),
-('jane_smith', 'jane@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'),
-('bob_wilson', 'bob@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'),
-('alice_brown', 'alice@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy');
+('john_doe', 'john@example.com', '$2a$12$47B2oR.ipiY0nfu0G07HHevuomgpnJeW81jFLV0ZkUprvQDoBvxMa'),
+('jane_smith', 'jane@example.com', '$2a$12$47B2oR.ipiY0nfu0G07HHevuomgpnJeW81jFLV0ZkUprvQDoBvxMa'),
+('bob_wilson', 'bob@example.com', '$2a$12$47B2oR.ipiY0nfu0G07HHevuomgpnJeW81jFLV0ZkUprvQDoBvxMa'),
+('alice_brown', 'alice@example.com', '$2a$12$47B2oR.ipiY0nfu0G07HHevuomgpnJeW81jFLV0ZkUprvQDoBvxMa');
 
 -- Insert sample leagues
 INSERT INTO leagues (name, description, is_public, invite_code, created_by) VALUES
