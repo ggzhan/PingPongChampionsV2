@@ -75,6 +75,23 @@ function logout() {
     localStorage.removeItem(USER_KEY);
 }
 
+async function sendVerificationEmail(email) {
+    const response = await fetch(`${API_BASE_URL}/auth/send-verification`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send verification email');
+    }
+
+    return await response.json();
+}
+
 function isAuthenticated() {
     return localStorage.getItem(TOKEN_KEY) !== null;
 }

@@ -40,6 +40,12 @@
 
                 <div id="error-message" class="error-message hidden"></div>
 
+                <div id="verify-again-container" class="hidden" style="margin-top: 1rem; margin-bottom: 1rem;">
+                    <button type="button" id="verify-again-btn" class="btn btn-secondary" style="width: 100%;">
+                        Verify Again
+                    </button>
+                </div>
+
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
                     Login
                 </button>
@@ -62,6 +68,9 @@
     <script>
         // Check for success message from registration or verification
         const urlParams = new URLSearchParams(window.location.search);
+        const verifyAgainContainer = document.getElementById('verify-again-container');
+        const verifyAgainBtn = document.getElementById('verify-again-btn');
+        
         if (urlParams.get('registered') === 'true') {
             const errorDiv = document.getElementById('error-message');
             errorDiv.textContent = 'Registration successful! Please check your email to verify your account.';
@@ -69,6 +78,12 @@
             errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
             errorDiv.style.borderColor = '#2ecc71';
             errorDiv.classList.remove('hidden');
+            
+            // Show verify again button if email is available
+            const userInfo = getCurrentUser();
+            if (userInfo && userInfo.email) {
+                verifyAgainContainer.classList.remove('hidden');
+            }
         } else if (urlParams.get('verified') === 'true') {
             const errorDiv = document.getElementById('error-message');
             errorDiv.textContent = 'Email verified successfully! You can now login.';
@@ -77,6 +92,38 @@
             errorDiv.style.borderColor = '#2ecc71';
             errorDiv.classList.remove('hidden');
         }
+        
+        // Handle verify again button click
+        verifyAgainBtn.addEventListener('click', async () => {
+            const userInfo = getCurrentUser();
+            if (!userInfo || !userInfo.email) {
+                alert('Email not found. Please register again.');
+                return;
+            }
+            
+            verifyAgainBtn.disabled = true;
+            verifyAgainBtn.textContent = 'Sending...';
+            
+            try {
+                await sendVerificationEmail(userInfo.email);
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = 'Verification email sent! Please check your inbox.';
+                errorDiv.style.color = '#2ecc71';
+                errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                errorDiv.style.borderColor = '#2ecc71';
+                errorDiv.classList.remove('hidden');
+            } catch (error) {
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = error.message || 'Failed to send verification email.';
+                errorDiv.style.color = '';
+                errorDiv.style.backgroundColor = '';
+                errorDiv.style.borderColor = '';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                verifyAgainBtn.disabled = false;
+                verifyAgainBtn.textContent = 'Verify Again';
+            }
+        });
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
