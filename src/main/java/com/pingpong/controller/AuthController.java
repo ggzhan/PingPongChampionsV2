@@ -18,12 +18,20 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
             AuthResponse response = authService.register(request);
+            // If token is null, it means verification email was resent for existing unverified user
+            if (response.getToken() == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "Verification email sent. Please check your inbox.",
+                    "username", response.getUsername(),
+                    "email", response.getEmail()
+                ));
+            }
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

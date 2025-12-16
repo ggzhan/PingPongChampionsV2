@@ -26,16 +26,29 @@ async function register(username, email, password) {
         body: JSON.stringify({ username, email, password }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-        throw new Error('Registration failed');
+        // Extract error message from response
+        const error = new Error(data.error || 'Registration failed');
+        error.error = data.error;
+        throw error;
     }
 
-    const data = await response.json();
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, JSON.stringify({
-        username: data.username,
-        email: data.email
-    }));
+    // Store token and user info only if token exists (new registration)
+    if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(USER_KEY, JSON.stringify({
+            username: data.username,
+            email: data.email
+        }));
+    } else if (data.username && data.email) {
+        // For unverified user resend case, store user info but no token
+        localStorage.setItem(USER_KEY, JSON.stringify({
+            username: data.username,
+            email: data.email
+        }));
+    }
 
     return data;
 }

@@ -35,15 +35,39 @@ public class AuthService {
     private static final String TYPE_PASSWORD_RESET = "PASSWORD_RESET";
     private static final int CODE_EXPIRY_MINUTES = 15;
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Check if username already exists
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+        // Check if email already exists
+        User existingUserByEmail = userRepository.findByEmail(request.getEmail()).orElse(null);
+        
+        if (existingUserByEmail != null) {
+            // User exists with this email
+            if (Boolean.TRUE.equals(existingUserByEmail.getEmailVerified())) {
+                // User is already verified
+                throw new RuntimeException("Account already exists");
+            } else {
+                // User exists but is unverified - resend verification email
+                // Update password in case user wants to change it
+                existingUserByEmail.setPassword(passwordEncoder.encode(request.getPassword()));
+                userRepository.save(existingUserByEmail);
+                
+                // Send new verification email
+                try {
+                    sendVerificationEmailInternal(existingUserByEmail);
+                    log.info("Resent verification email for unverified user: {}", existingUserByEmail.getEmail());
+                } catch (Exception e) {
+                    log.warn("Failed to send verification email on registration: {}", e.getMessage());
+                }
+                
+                // Return response indicating verification email was sent
+                // Note: We don't generate a token here since email is not verified
+                return new AuthResponse(null, existingUserByEmail.getUsername(), existingUserByEmail.getEmail());
+            }
         }
 
-        // Check if email already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+        // Check if username already exists (only if email doesn't exist)
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
         }
 
         // Create new user

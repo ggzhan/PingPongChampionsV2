@@ -86,10 +86,38 @@
             try {
                 const response = await register(username, email, password);
                 if (response) {
-                    window.location.href = 'login.html?registered=true';
+                    // Check if this is a resend verification email response
+                    if (response.message) {
+                        // Unverified user - verification email was resent
+                        errorDiv.textContent = response.message;
+                        errorDiv.style.color = '#2ecc71'; // Success green
+                        errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+                        errorDiv.style.borderColor = '#2ecc71';
+                        errorDiv.classList.remove('hidden');
+                        // Redirect to login after showing message
+                        setTimeout(() => {
+                            window.location.href = 'login.html?registered=true';
+                        }, 2000);
+                    } else {
+                        // Normal registration success
+                        window.location.href = 'login.html?registered=true';
+                    }
                 }
             } catch (error) {
-                errorDiv.textContent = error.message || 'Registration failed. Username or email may already exist.';
+                // Handle error response from API
+                let errorMessage = 'Registration failed.';
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (error.error) {
+                    errorMessage = error.error;
+                }
+                
+                // Check if it's the "Account already exists" case
+                if (errorMessage.includes('Account already exists')) {
+                    errorMessage = 'An account with this email already exists and is verified. Please login instead.';
+                }
+                
+                errorDiv.textContent = errorMessage;
                 errorDiv.classList.remove('hidden');
             }
         });
