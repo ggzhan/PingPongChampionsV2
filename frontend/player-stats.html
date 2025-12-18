@@ -7,6 +7,7 @@
     <title>Player Statistics - Ping Pong Champions</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -64,6 +65,15 @@
                             style="display: block; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">Trend</span>
                         <div id="player-trend" style="font-size: 1.5rem; display: flex; gap: 4px;"></div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="elo-progression-section" style="margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 1.5rem; text-align: left;">ELO Progression</h2>
+            <div class="card" style="padding: 1.5rem;">
+                <div style="height: 350px; width: 100%;">
+                    <canvas id="elo-chart"></canvas>
                 </div>
             </div>
         </section>
@@ -169,6 +179,89 @@
 
             // Matches
             renderMatchHistory(matches, player.username);
+
+            // Chart
+            renderEloChart(matches, player.elo, player.username);
+        }
+
+        function renderEloChart(matches, currentElo, currentUsername) {
+            const ctx = document.getElementById('elo-chart').getContext('2d');
+
+            // Calculate ELO history
+            // Start from current ELO and work backwards
+            const eloPoints = [currentElo];
+            const labels = ['Current'];
+
+            let tempElo = currentElo;
+
+            // Copy matches and sort by date if they aren't already
+            const sortedMatches = [...matches].sort((a, b) => new Date(b.playedAt) - new Date(a.playedAt));
+
+            sortedMatches.forEach((match, index) => {
+                const isWinner = match.winnerUsername === currentUsername;
+                const change = isWinner ? match.winnerEloChange : match.loserEloChange;
+
+                tempElo -= change;
+                eloPoints.push(tempElo);
+                labels.push(new Date(match.playedAt).toLocaleDateString());
+            });
+
+            // Reverse to show progression from past to present
+            eloPoints.reverse();
+            labels.reverse();
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ELO Rating',
+                        data: eloPoints,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 6,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `ELO: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#a0a0b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#a0a0b8'
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function renderMatchHistory(matches, currentUsername) {
