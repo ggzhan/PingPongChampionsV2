@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Statistics - Ping Pong Champions</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <a href="dashboard.html" class="logo">Ping Pong Champions</a>
+            <div class="nav-buttons">
+                <a id="back-to-league" href="#" class="btn btn-secondary">← Back to League</a>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section id="player-header" class="card" style="margin-bottom: 2rem;">
+            <div id="player-loading" class="spinner"></div>
+            <div id="player-info-container" class="hidden">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div class="avatar-large" id="player-avatar"
+                        style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: white;">
+                    </div>
+                    <div>
+                        <h1 id="player-username" style="margin-bottom: 0.5rem;"></h1>
+                        <div id="player-role-badge"></div>
+                    </div>
+                </div>
+
+                <div class="stats-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin-top: 2rem; border-top: 1px solid var(--card-border); padding-top: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-label"
+                            style="display: block; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">Current
+                            ELO</span>
+                        <span id="player-elo" class="stat-value"
+                            style="font-size: 2rem; font-weight: 800; color: #667eea;"></span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label"
+                            style="display: block; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">Win
+                            Rate</span>
+                        <span id="player-winrate" class="stat-value" style="font-size: 2rem; font-weight: 800;"></span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label"
+                            style="display: block; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">Wins
+                            / Losses</span>
+                        <div style="font-size: 1.5rem; font-weight: 700;">
+                            <span id="player-wins" style="color: #4facfe;"></span>
+                            <span style="color: var(--text-secondary);">/</span>
+                            <span id="player-losses" style="color: #f5576c;"></span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label"
+                            style="display: block; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">Trend</span>
+                        <div id="player-trend" style="font-size: 1.5rem; display: flex; gap: 4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="match-history-section">
+            <h2 style="margin-bottom: 1.5rem; text-align: left;">Match History</h2>
+            <div class="card">
+                <div id="matches-container">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ping Pong Champions. All rights reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication
+        if (typeof isAuthenticated !== 'function' || !isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const leagueId = urlParams.get('leagueId');
+        const userId = urlParams.get('userId');
+
+        if (!leagueId || !userId) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Set back button link
+        document.getElementById('back-to-league').href = `league.html?id=${leagueId}`;
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            window.location.href = 'index.html';
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await getPlayerStats(leagueId, userId);
+                renderPlayerStats(data);
+            } catch (error) {
+                const loadingDiv = document.getElementById('player-loading');
+                loadingDiv.classList.remove('spinner');
+                loadingDiv.innerHTML = `<p style="text-align: center; color: #f5576c;">Failed to load player statistics: ${error.message}</p>`;
+            }
+        });
+
+        function renderPlayerStats(data) {
+            const player = data.playerInfo;
+            const matches = data.matchHistory;
+
+            // Hide loading
+            document.getElementById('player-loading').classList.add('hidden');
+            document.getElementById('player-info-container').classList.remove('hidden');
+
+            // Header Info
+            document.getElementById('player-username').textContent = player.username;
+            document.getElementById('player-avatar').textContent = player.username.charAt(0).toUpperCase();
+
+            const badge = document.getElementById('player-role-badge');
+            if (player.role === 'OWNER') {
+                badge.innerHTML = '<span class="league-badge badge-private">League Owner 👑</span>';
+            } else if (player.role === 'ADMIN') {
+                badge.innerHTML = '<span class="league-badge badge-public">Admin 🛡️</span>';
+            } else {
+                badge.innerHTML = '<span class="league-badge" style="background: rgba(255,255,255,0.1); color: var(--text-secondary);">Member</span>';
+            }
+
+            // Stats
+            document.getElementById('player-elo').textContent = player.elo;
+            document.getElementById('player-wins').textContent = player.wins;
+            document.getElementById('player-losses').textContent = player.losses;
+
+            const total = player.wins + player.losses;
+            const winRate = total === 0 ? 0 : Math.round((player.wins / total) * 100);
+            document.getElementById('player-winrate').textContent = `${winRate}%`;
+
+            // Win rate color
+            const winRateEl = document.getElementById('player-winrate');
+            if (winRate >= 60) winRateEl.style.color = '#2ecc71';
+            else if (winRate >= 45) winRateEl.style.color = '#4facfe';
+            else if (winRate > 0) winRateEl.style.color = '#f5576c';
+
+            // Trend
+            const trendContainer = document.getElementById('player-trend');
+            if (player.trend) {
+                player.trend.split('').forEach(char => {
+                    const span = document.createElement('span');
+                    span.textContent = char;
+                    span.style.color = char === 'W' ? '#4facfe' : '#f5576c';
+                    span.style.fontWeight = '800';
+                    trendContainer.appendChild(span);
+                });
+            } else {
+                trendContainer.textContent = '-';
+            }
+
+            // Matches
+            renderMatchHistory(matches, player.username);
+        }
+
+        function renderMatchHistory(matches, currentUsername) {
+            const container = document.getElementById('matches-container');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No matches recorded for this player yet.</p>';
+                return;
+            }
+
+            const table = document.createElement('div');
+            table.style.overflowX = 'auto';
+
+            table.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase;">
+                            <th style="padding: 1rem; text-align: left;">Date</th>
+                            <th style="padding: 1rem; text-align: center;">Result</th>
+                            <th style="padding: 1rem; text-align: left;">Opponent</th>
+                            <th style="padding: 1rem; text-align: right;">ELO Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${matches.map(match => {
+                const isWinner = match.winnerUsername === currentUsername;
+                const result = isWinner ? 'WIN' : 'LOSS';
+                const resultColor = isWinner ? '#4facfe' : '#f5576c';
+                const opponent = isWinner ? match.loserUsername : match.winnerUsername;
+                const eloChange = isWinner ? match.winnerEloChange : match.loserEloChange;
+                const eloColor = eloChange > 0 ? '#4facfe' : (eloChange < 0 ? '#f5576c' : 'var(--text-secondary)');
+                const eloSign = eloChange > 0 ? '+' : '';
+
+                return `
+                                <tr style="border-bottom: 1px solid var(--card-border);">
+                                    <td style="padding: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+                                        ${new Date(match.playedAt).toLocaleDateString()}
+                                    </td>
+                                    <td style="padding: 1rem; text-align: center;">
+                                        <span style="font-weight: 800; color: ${resultColor}; background: ${resultColor}22; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem;">
+                                            ${result}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 1rem;">
+                                        <strong style="color: var(--text-primary);">${opponent}</strong>
+                                    </td>
+                                    <td style="padding: 1rem; text-align: right;">
+                                        <span style="font-weight: 700; color: ${eloColor};">
+                                            ${eloSign}${eloChange}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+            }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = '';
+            container.appendChild(table);
+        }
+    </script>
+</body>
+
+</html>

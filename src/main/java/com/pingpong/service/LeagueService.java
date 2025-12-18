@@ -8,6 +8,7 @@ import com.pingpong.dto.LeagueMemberResponse;
 import com.pingpong.dto.LeagueResponse;
 import com.pingpong.dto.MatchRequest;
 import com.pingpong.dto.MatchResponse;
+import com.pingpong.dto.PlayerStatsResponse;
 import com.pingpong.model.League;
 import com.pingpong.model.LeagueMember;
 import com.pingpong.model.Match;
@@ -24,9 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -300,6 +299,43 @@ public class LeagueService {
                         match.getLoserEloChange(),
                         match.getPlayedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PlayerStatsResponse getPlayerStats(Long leagueId, Long userId) {
+        LeagueMember member = leagueMemberRepository.findByUserIdAndLeagueId(userId, leagueId)
+                .orElseThrow(() -> new RuntimeException("Member not found in this league"));
+
+        // Get all matches for this member in this league to calculate stats
+        List<Match> leagueMatches = matchRepository.findByLeagueIdOrderByPlayedAtDesc(leagueId);
+        MemberStats stats = new MemberStats();
+        for (Match match : leagueMatches) {
+            if (match.getWinner().getId().equals(userId)) {
+                stats.wins++;
+                stats.addTrend('W');
+            } else if (match.getLoser().getId().equals(userId)) {
+                stats.losses++;
+                stats.addTrend('L');
+            }
+        }
+
+        // Get match history for this member in this league
+        List<MatchResponse> matchHistory = matchRepository.findByLeagueIdAndUserIdOrderByPlayedAtDesc(leagueId, userId)
+                .stream()
+                .map(match -> new MatchResponse(
+                        match.getId(),
+                        match.getWinner().getUsername(),
+                        match.getLoser().getUsername(),
+                        match.getWinnerEloChange(),
+                        match.getLoserEloChange(),
+                        match.getPlayedAt()))
+                .collect(Collectors.toList());
+
+        PlayerStatsResponse response = new PlayerStatsResponse();
+        response.setPlayerInfo(mapToLeagueMemberResponse(member, stats));
+        response.setMatchHistory(matchHistory);
+
+        return response;
     }
 
     private LeagueResponse mapToLeagueResponse(League league) {

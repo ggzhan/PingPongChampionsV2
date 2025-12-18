@@ -121,4 +121,11 @@ public class LeagueController {
     public ResponseEntity<List<MatchResponse>> getMatches(@PathVariable Long id) {
         return ResponseEntity.ok(leagueService.getMatches(id));
     }
+
+    @GetMapping("/{id}/members/{userId}/stats")
+    public ResponseEntity<com.pingpong.dto.PlayerStatsResponse> getPlayerStats(
+            @PathVariable Long id,
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(leagueService.getPlayerStats(id, userId));
+    }
 }

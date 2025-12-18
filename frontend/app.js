@@ -234,6 +234,18 @@ async function getMatches(leagueId) {
     return await response.json();
 }
 
+async function getPlayerStats(leagueId, userId) {
+    const response = await fetch(`${API_BASE_URL}/leagues/${leagueId}/members/${userId}/stats`, {
+        headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch player statistics');
+    }
+
+    return await response.json();
+}
+
 // UI Helper Functions
 function createLeagueCard(league, showJoinButton = false) {
     const card = document.createElement('div');

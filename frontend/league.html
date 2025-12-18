@@ -372,9 +372,11 @@
                                 </td>
                                 <td style="padding: 1rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                        <strong style="font-size: 1rem;">${member.username}</strong>
-                                        ${member.role === 'OWNER' ? '<span title="Owner">👑</span>' : ''}
-                                        ${member.role === 'ADMIN' ? '<span title="Admin">🛡️</span>' : ''}
+                                        <a href="player-stats.html?leagueId=${leagueId}&userId=${member.userId}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                                            <strong style="font-size: 1rem; color: #667eea; cursor: pointer;">${member.username}</strong>
+                                            ${member.role === 'OWNER' ? '<span title="Owner">👑</span>' : ''}
+                                            ${member.role === 'ADMIN' ? '<span title="Admin">🛡️</span>' : ''}
+                                        </a>
                                     </div>
                                 </td>
                                 <td style="padding: 1rem; text-align: right;">

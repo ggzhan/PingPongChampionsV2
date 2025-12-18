@@ -11,4 +11,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByLeagueIdOrderByPlayedAtDesc(Long leagueId);
 
     List<Match> findByWinnerIdOrLoserIdOrderByPlayedAtDesc(Long winnerId, Long loserId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT m FROM Match m WHERE m.league.id = :leagueId AND (m.winner.id = :userId OR m.loser.id = :userId) ORDER BY m.playedAt DESC")
+    List<Match> findByLeagueIdAndUserIdOrderByPlayedAtDesc(Long leagueId, Long userId);
 }
