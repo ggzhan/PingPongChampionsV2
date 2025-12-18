@@ -12,7 +12,7 @@
 <body>
     <header>
         <nav>
-            <div class="logo">Ping Pong Champions</div>
+            <a href="index.html" class="logo">Ping Pong Champions</a>
             <div class="nav-buttons">
                 <a href="index.html" class="btn btn-secondary">Home</a>
                 <a href="login.html" class="btn btn-primary">Login</a>
@@ -54,7 +54,7 @@
             try {
                 const url = `${API_BASE_URL}/auth/verify-email?code=${encodeURIComponent(code)}`;
                 console.log('Verifying email with URL:', url);
-                
+
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -100,7 +100,7 @@
                 statusDiv.innerHTML = '';
                 errorDiv.textContent = error.message || 'Verification failed. The link may have expired or is invalid.';
                 errorDiv.classList.remove('hidden');
-                
+
                 // Show link to resend verification
                 const resendDiv = document.createElement('div');
                 resendDiv.className = 'text-center';
@@ -132,4 +132,3 @@
 </body>
 
 </html>
-

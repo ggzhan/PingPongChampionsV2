@@ -12,7 +12,7 @@
 <body>
     <header>
         <nav>
-            <div class="logo">Ping Pong Champions</div>
+            <a href="index.html" class="logo">Ping Pong Champions</a>
             <div class="nav-buttons">
                 <a href="index.html" class="btn btn-secondary">Home</a>
                 <a href="register.html" class="btn btn-primary">Sign Up</a>
@@ -70,7 +70,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const verifyAgainContainer = document.getElementById('verify-again-container');
         const verifyAgainBtn = document.getElementById('verify-again-btn');
-        
+
         if (urlParams.get('registered') === 'true') {
             const errorDiv = document.getElementById('error-message');
             errorDiv.textContent = 'Registration successful! Please check your email to verify your account.';
@@ -78,7 +78,7 @@
             errorDiv.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
             errorDiv.style.borderColor = '#2ecc71';
             errorDiv.classList.remove('hidden');
-            
+
             // Show verify again button if email is available
             const userInfo = getCurrentUser();
             if (userInfo && userInfo.email) {
@@ -92,7 +92,7 @@
             errorDiv.style.borderColor = '#2ecc71';
             errorDiv.classList.remove('hidden');
         }
-        
+
         // Handle verify again button click
         verifyAgainBtn.addEventListener('click', async () => {
             const userInfo = getCurrentUser();
@@ -100,10 +100,10 @@
                 alert('Email not found. Please register again.');
                 return;
             }
-            
+
             verifyAgainBtn.disabled = true;
             verifyAgainBtn.textContent = 'Sending...';
-            
+
             try {
                 await sendVerificationEmail(userInfo.email);
                 const errorDiv = document.getElementById('error-message');

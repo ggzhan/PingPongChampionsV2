@@ -12,7 +12,7 @@
 <body>
     <header>
         <nav>
-            <div class="logo">Ping Pong Champions</div>
+            <a href="index.html" class="logo">Ping Pong Champions</a>
             <div class="nav-buttons">
                 <a href="index.html" class="btn btn-secondary">Home</a>
                 <a href="login.html" class="btn btn-primary">Login</a>
@@ -111,12 +111,12 @@
                 } else if (error.error) {
                     errorMessage = error.error;
                 }
-                
+
                 // Check if it's the "Account already exists" case
                 if (errorMessage.includes('Account already exists')) {
                     errorMessage = 'An account with this email already exists and is verified. Please login instead.';
                 }
-                
+
                 errorDiv.textContent = errorMessage;
                 errorDiv.classList.remove('hidden');
             }
