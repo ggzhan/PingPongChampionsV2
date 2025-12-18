@@ -39,7 +39,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
         User existingUserByEmail = userRepository.findByEmail(request.getEmail()).orElse(null);
-        
+
         if (existingUserByEmail != null) {
             // User exists with this email
             if (Boolean.TRUE.equals(existingUserByEmail.getEmailVerified())) {
@@ -50,7 +50,7 @@ public class AuthService {
                 // Update password in case user wants to change it
                 existingUserByEmail.setPassword(passwordEncoder.encode(request.getPassword()));
                 userRepository.save(existingUserByEmail);
-                
+
                 // Send new verification email
                 try {
                     sendVerificationEmailInternal(existingUserByEmail);
@@ -58,7 +58,7 @@ public class AuthService {
                 } catch (Exception e) {
                     log.warn("Failed to send verification email on registration: {}", e.getMessage());
                 }
-                
+
                 // Return response indicating verification email was sent
                 // Note: We don't generate a token here since email is not verified
                 return new AuthResponse(null, existingUserByEmail.getUsername(), existingUserByEmail.getEmail());
@@ -96,11 +96,11 @@ public class AuthService {
         // Authenticate user
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
+                        request.getIdentifier(),
                         request.getPassword()));
 
-        // Get user from database
-        User user = userRepository.findByUsername(request.getUsername())
+        // Get user from database - search by username or email
+        User user = userRepository.findByUsernameOrEmail(request.getIdentifier(), request.getIdentifier())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {

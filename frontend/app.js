@@ -53,13 +53,13 @@ async function register(username, email, password) {
     return data;
 }
 
-async function login(username, password) {
+async function login(identifier, password) {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ identifier, password }),
     });
 
     if (!response.ok) {
